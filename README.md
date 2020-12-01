@@ -13,7 +13,7 @@ Development:
 docker-compose build
 ```
 
-#### How to use it
+
 # Taicol API handbook
 Webisite URL: http://api.taicol.tw:8080/
 
