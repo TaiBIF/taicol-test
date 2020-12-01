@@ -8,8 +8,8 @@ services:
     environment:
        MYSQL_DATABASE: 'myproject'
        MYSQL_USER: 'myprojectuser'
-       MYSQL_PASSWORD: 'jonghoonharuma'
-       MYSQL_ROOT_PASSWORD: 'jonghoonharuma'
+       MYSQL_PASSWORD: 'your_password'
+       MYSQL_ROOT_PASSWORD: 'your_password'
   web:
     container_name: taicol-web-container
     image: taicol-web-image
