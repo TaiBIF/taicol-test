@@ -1,0 +1,26 @@
+version: '3.7'
+
+services:
+  db:
+    image: mysql:5.7
+    #ports:
+    #  - '3306:3306'
+    environment:
+       MYSQL_DATABASE: 'myproject'
+       MYSQL_USER: 'myprojectuser'
+       MYSQL_PASSWORD: 'jonghoonharuma'
+       MYSQL_ROOT_PASSWORD: 'jonghoonharuma'
+  web:
+    container_name: taicol-web-container
+    image: taicol-web-image
+    build: .
+    command: ./entry/docker-web-entry.sh
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    env_file:
+      - .env
+

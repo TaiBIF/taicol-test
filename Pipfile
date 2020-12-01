@@ -15,6 +15,7 @@ django-filter = "*"
 django-cors-headers = "*"
 pyyaml = "*"
 django-rest-swagger = "*"
+gunicorn = "*"
 
 [requires]
 python_version = "3.8"

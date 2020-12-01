@@ -12,23 +12,31 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 import os
+import environ
+
+
+env = environ.Env()
+root_path = (
+    environ.Path(__file__) - 1
+)
+print(root_path)
+
+# False if not in os.environ
+DEBUG = env('DEBUG')
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
+#BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = root_path()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'bd+=#=-!z723=cji#_ig#(*#=ue*f&b$t%v_r@1w#slq+biox='
+SECRET_KEY = env('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+ROOT_URLCONF = 'mysite.urls'
+WSGI_APPLICATION = 'mysite.wsgi.application'
 # Application definition
 
 INSTALLED_APPS = [
@@ -56,7 +64,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'mysite.urls'
+
 
 
 TEMPLATES = [
@@ -76,13 +84,14 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mysite.wsgi.application'
+
 
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
+DATABASES = {'default': env.db('DATABASE_URL')}
 
-DATABASES = {
+'''DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'myproject',
@@ -91,8 +100,7 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '3306',
     }
-}
-
+}'''
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
@@ -131,12 +139,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
 
 
 # global settings for a REST framework API
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'mysite.pagination.CustomPagination',
-    'PAGE_SIZE': 100
+    'PAGE_SIZE': 200
 }
 
 CORS_ORIGIN_ALLOW_ALL = False

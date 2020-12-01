@@ -1,0 +1,40 @@
+version: '3.7'
+
+services:
+  web:
+    build: .
+    container_name: taicol-off-web-container
+    image: taicol-off-web-image
+    command: ./entry/docker-off-entry.sh
+    volumes:
+      - .:/code
+      - ./taicol-volumes/static:/code/mysite/mysite/static
+    expose:
+      - 8001
+    tty: true
+    stdin_open: true
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:1.17.6-alpine
+    restart: always
+    ports:
+      - 8080:80
+    volumes:
+      - ./taicol-api.conf:/etc/nginx/conf.d/taicol-api.conf
+      - ./taicol-volumes/logs/nginx:/var/log/nginx
+      - ./taicol-volumes/static:/code/mysite/mysite/static
+    links:
+      - web:web
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "3"
+
+
+
+
+
+
