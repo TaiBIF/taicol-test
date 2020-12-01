@@ -91,16 +91,7 @@ TEMPLATES = [
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 DATABASES = {'default': env.db('DATABASE_URL')}
 
-'''DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'myproject',
-        'USER': 'myprojectuser',
-        'PASSWORD': 'jonghoonharuma',
-        'HOST': 'localhost',
-        'PORT': '3306',
-    }
-}'''
+
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
