@@ -1,4 +1,9 @@
 # taicol-test
+
+#### Remember to change .env file
+1. Fill your SECRET_KEY
+2. Fill username and password in DATABASE_URL  
+
 #### Installing 
 
 To install <project_, follow these steps:
