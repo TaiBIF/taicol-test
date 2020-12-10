@@ -20,7 +20,7 @@ services:
     image: nginx:1.17.6-alpine
     restart: always
     ports:
-      - 8080:80
+      - 80:80
     volumes:
       - ./taicol-api.conf:/etc/nginx/conf.d/taicol-api.conf
       - ./taicol-volumes/logs/nginx:/var/log/nginx
