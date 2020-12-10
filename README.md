@@ -6,7 +6,7 @@
 
 #### Installing 
 
-To install <project_, follow these steps:
+To install project, follow these steps:
 
 Production:
 ```
