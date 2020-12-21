@@ -175,6 +175,10 @@ def name_code(pk, simple, page, limit):
             try:
                 current_page = paginator.page(page)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0, {
+                    'total_page': num_pages,
+                    'current_page': page
+                })
             except:
                 return 'Page does not exist'
         else:
@@ -184,6 +188,10 @@ def name_code(pk, simple, page, limit):
         try:
             current_page = paginator.page(1)
             current_page_list = current_page.object_list
+            current_page_list.insert(0, {
+                'total_page': num_pages,
+                'current_page': 1
+            })
         except:
             return 'Page does not exist'
 
@@ -379,6 +387,10 @@ def species_name(name, simple, date, accept, page, limit):
             try:
                 current_page = paginator.page(page)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0,{
+                    'total_page':num_pages,
+                    'current_page':page
+                })
             except:
                 return 'Page does not exist'
         else:
@@ -388,6 +400,10 @@ def species_name(name, simple, date, accept, page, limit):
         try:
             current_page = paginator.page(1)
             current_page_list = current_page.object_list
+            current_page_list.insert(0, {
+                'total_page': num_pages,
+                'current_page': 1
+            })
         except:
             return 'Page does not exist'
     #print(current_page_list)
@@ -587,6 +603,10 @@ def common_name(cname, simple, date, accept, page, limit):
             try:
                 current_page = paginator.page(page)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0, {
+                    'total_page': num_pages,
+                    'current_page': page
+                })
             except:
                 return 'Page does not exist'
         else:
@@ -596,6 +616,10 @@ def common_name(cname, simple, date, accept, page, limit):
         try:
             current_page = paginator.page(1)
             current_page_list = current_page.object_list
+            current_page_list.insert(0, {
+                'total_page': num_pages,
+                'current_page': 1
+            })
         except:
             return 'Page does not exist'
     return current_page_list
@@ -777,6 +801,10 @@ def accept_name(accept, simple, date, page, limit):
             try:
                 current_page = paginator.page(page)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0, {
+                    'total_page': num_pages,
+                    'current_page': page
+                })
             except:
                 return 'Page does not exist'
         else:
@@ -786,6 +814,10 @@ def accept_name(accept, simple, date, page, limit):
         try:
             current_page = paginator.page(1)
             current_page_list = current_page.object_list
+            current_page_list.insert(0, {
+                'total_page': num_pages,
+                'current_page': 1
+            })
         except:
             return 'Page does not exist'
     return current_page_list
@@ -939,6 +971,10 @@ def date_range(date, simple, page, limit):
             try:
                 current_page = paginator.page(page)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0, {
+                    'total_page': num_pages,
+                    'current_page': page
+                })
             except:
                 return 'Page does not exist'
         else:
@@ -948,6 +984,10 @@ def date_range(date, simple, page, limit):
         try:
             current_page = paginator.page(1)
             current_page_list = current_page.object_list
+            current_page_list.insert(0, {
+                'total_page': num_pages,
+                'current_page': 1
+            })
         except:
             return 'Page does not exist'
     print('date_range')
@@ -1011,6 +1051,10 @@ def simple_formate(simple, page, limit):
                 try:
                     current_page = paginator.page(page)
                     current_page_list = current_page.object_list
+                    current_page_list.insert(0, {
+                        'total_page': num_pages,
+                        'current_page': page
+                    })
                 except:
                     return 'Page does not exist'
             else:
@@ -1020,6 +1064,10 @@ def simple_formate(simple, page, limit):
             try:
                 current_page = paginator.page(1)
                 current_page_list = current_page.object_list
+                current_page_list.insert(0, {
+                    'total_page': num_pages,
+                    'current_page': 1
+                })
             except:
                 return 'Page does not exist'
 
