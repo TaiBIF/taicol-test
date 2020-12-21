@@ -83,14 +83,13 @@ def scinames_list_published(request):
 class SpeciesViewSet(viewsets.ModelViewSet):
     """
         #### Find the species by scientificname (no need to type completed name):
-        ```/speciesname/Aulodrilus pigueti```
+        ```/v1/?speciesname=Aulodrilus pigueti```
 
        #### Add other filters:
-       1. update date : ```/speciesname/Aulodrilus pigueti/date=2011-01-09```
-        2. is accepted name: ```/speciesname/Aulodrilus pigueti/accept=True```
-        3. combined above criteria (date first, then accept): ```/speciesname/Aulodrilus pigueti/date=2011-01-09/accept=True```
-        4. generate the simple format: add ```simple=True``` at last
-
+       1. update date : ```/v1/?speciesname=Aulodrilus pigueti&date=2011-01-09```
+        2. is accepted name: ```/v1/?speciesname=Aulodrilus pigueti&accept=True```
+        3. combined above criteria: ```/v1/?speciesname=Aulodrilus pigueti&date=2011-01-09&accept=True```
+        4. generate the simple format: add ```simple=True```
 
           """
     queryset = ScientificNames.objects.all()
@@ -306,10 +305,10 @@ class SpeciesViewSet(viewsets.ModelViewSet):
 class NamecodeViewSet(viewsets.ModelViewSet):
     """
     #### Find the species by namecode:
-    ```/namecode/403245```
+    ```/v1/?namecode=403245```
 
     #### Generate the simple format : add ```simple=True``` at last
-    ```/namecode/403245/simple=True```
+    ```/v1/?namecode=403245&simple=True```
 
        """
     queryset = ScientificNames.objects.all()
@@ -487,14 +486,13 @@ class NamecodeViewSet(viewsets.ModelViewSet):
 class CommonViewSet(viewsets.ModelViewSet):
     """
             #### Find the species by common name (no need to type completed name):
-            ```/common/山柑```
+            ```/v1/?common=山柑```
 
            #### Add other filters:
-           1. update date : ```/common/山柑/date=2011-01-09```
-            2. is accepted name: ```/common/山柑/accept=True```
-            3. combined above criteria (date first, then accept): ```/common/山柑/date=2011-01-09/accept=True```
+           1. update date : ```/v1/?common=山柑&date=2011-01-09```
+            2. is accepted name: ```/v1/?common=山柑&accept=True```
+            3. combined above criteria: ```/v1/?common=山柑&date=2011-01-09&accept=True```
             4. generate the simple format: add ```simple=True``` at last
-
 
               """
     queryset = TableSpecieslist.objects.all()
