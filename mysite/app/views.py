@@ -24,7 +24,7 @@ from .serializers import (
     ScientificNamesSerializer,
     TableSpecieslistSerializer,
     DetailsSerializer)
-import datetime
+import datetime, itertools
 
 def name_code(pk, simple, page, limit):
     try:
@@ -249,48 +249,44 @@ def species_name(name, simple, date, accept, page, limit):
         # check whether in redlist
     redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
     context = []
+    #Create a redlist dic for adding redlist info
+    red_dict = dict()
+    for red in redlist:
+        red_dict[red.name_code] = red
+    context = []
     if simple == 'True':
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'family': x.family,
+                'family_c': x.family_c,
+                'common_name_c': x.common_name_c,
+            })
+        #check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            #print('red_code', red_code)
+            if red_code in list(red_dict.keys()) :
+                #print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
 
-                })
-        else:
-            for x, y in zip(tables, scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-
-                })
     else:
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
+        for x, y in zip(tables, scinames):
+            context.append({
+                 'name_code': x.name_code,
                     'name': y.name,
                     'genus': y.genus,
                     'species': y.species,
@@ -323,58 +319,26 @@ def species_name(name, simple, date, accept, page, limit):
                     'family_c': x.family_c,
                     'genus_c': x.genus_c,
                     'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
-                    'redlist_wang': z.redlist_wang,
-                    'redlist_chen': z.redlist_chen
-                })
-        else:
-            for x, y in zip(
-                    TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True)),
-                    scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-                    'redlist_wang': None,
-                    'redlist_chen': None
-                })
+            })
+        #check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            #print('red_code', red_code)
+            if red_code in list(red_dict.keys()) :
+                #print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+                item['redlist_wang'] = red_dict[red_code].redlist_wang
+                item['redlist_chen'] = red_dict[red_code].redlist_chen
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
+                item['redlist_wang'] = None
+                item['redlist_chen'] = None
     try:
         paginator = Paginator(context, limit, orphans=5)
         num_pages = paginator.num_pages
@@ -465,132 +429,96 @@ def common_name(cname, simple, date, accept, page, limit):
 
     redlist = Details.objects.filter(name_code__in=tables.values_list('name_code', flat=True))
     context = []
+    # Create a redlist dic for adding redlist info
+    red_dict = dict()
+    for red in redlist:
+        red_dict[red.name_code] = red
+    context = []
     if simple == 'True':
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'family': x.family,
+                'family_c': x.family_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
 
-                })
-        else:
-            for x, y in zip(tables, scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-
-                })
     else:
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
-                    'redlist_wang': z.redlist_wang,
-                    'redlist_chen': z.redlist_chen
-                })
-        else:
-            for x, y in zip(
-                    TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True)),
-                    scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-                    'redlist_wang': None,
-                    'redlist_chen': None
-                })
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'genus': y.genus,
+                'species': y.species,
+                'infraspecies_marker': y.infraspecies_marker,
+                'infraspecies': y.infraspecies,
+                'infraspecies2_marker': y.infraspecies2_marker,
+                'infraspecies2': y.infraspecies2,
+                'author': y.author,
+                'author2': y.author2,
+                'is_accepted_name': y.is_accepted_name,
+                'accepted_name_code': y.accepted_name_code,
+                'status_id': y.status_id,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'is_marine': y.is_marine,
+                'is_fossil': y.is_fossil,
+                'ref_short': y.ref_short,
+                'reference': y.reference,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'kingdom': x.kingdom,
+                'kingdom_c': x.kingdom_c,
+                'phylum': x.phylum,
+                'phylum_c': x.phylum_c,
+                'class': x.class_field,
+                'class_c': x.class_c,
+                'order': x.order,
+                'order_c': x.order_c,
+                'family': x.family,
+                'family_c': x.family_c,
+                'genus_c': x.genus_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+                item['redlist_wang'] = red_dict[red_code].redlist_wang
+                item['redlist_chen'] = red_dict[red_code].redlist_chen
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
+                item['redlist_wang'] = None
+                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -663,132 +591,96 @@ def accept_name(accept, simple, date, page, limit):
 
     redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
     context = []
+    # Create a redlist dic for adding redlist info
+    red_dict = dict()
+    for red in redlist:
+        red_dict[red.name_code] = red
+    context = []
     if simple == 'True':
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'family': x.family,
+                'family_c': x.family_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
 
-                })
-        else:
-            for x, y in zip(tables, scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-
-                })
     else:
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
-                    'redlist_wang': z.redlist_wang,
-                    'redlist_chen': z.redlist_chen
-                })
-        else:
-            for x, y in zip(
-                    TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True)),
-                    scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-                    'redlist_wang': None,
-                    'redlist_chen': None
-                })
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'genus': y.genus,
+                'species': y.species,
+                'infraspecies_marker': y.infraspecies_marker,
+                'infraspecies': y.infraspecies,
+                'infraspecies2_marker': y.infraspecies2_marker,
+                'infraspecies2': y.infraspecies2,
+                'author': y.author,
+                'author2': y.author2,
+                'is_accepted_name': y.is_accepted_name,
+                'accepted_name_code': y.accepted_name_code,
+                'status_id': y.status_id,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'is_marine': y.is_marine,
+                'is_fossil': y.is_fossil,
+                'ref_short': y.ref_short,
+                'reference': y.reference,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'kingdom': x.kingdom,
+                'kingdom_c': x.kingdom_c,
+                'phylum': x.phylum,
+                'phylum_c': x.phylum_c,
+                'class': x.class_field,
+                'class_c': x.class_c,
+                'order': x.order,
+                'order_c': x.order_c,
+                'family': x.family,
+                'family_c': x.family_c,
+                'genus_c': x.genus_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+                item['redlist_wang'] = red_dict[red_code].redlist_wang
+                item['redlist_chen'] = red_dict[red_code].redlist_chen
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
+                item['redlist_wang'] = None
+                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -833,132 +725,96 @@ def date_range(date, simple, page, limit):
         # check whether in redlist
     redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
     context = []
+    # Create a redlist dic for adding redlist info
+    red_dict = dict()
+    for red in redlist:
+        red_dict[red.name_code] = red
+    context = []
     if simple == 'True':
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'family': x.family,
+                'family_c': x.family_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
 
-                })
-        else:
-            for x, y in zip(tables, scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-
-                })
     else:
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
-                    'redlist_wang': z.redlist_wang,
-                    'redlist_chen': z.redlist_chen
-                })
-        else:
-            for x, y in zip(
-                    TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True)),
-                    scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-                    'redlist_wang': None,
-                    'redlist_chen': None
-                })
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'genus': y.genus,
+                'species': y.species,
+                'infraspecies_marker': y.infraspecies_marker,
+                'infraspecies': y.infraspecies,
+                'infraspecies2_marker': y.infraspecies2_marker,
+                'infraspecies2': y.infraspecies2,
+                'author': y.author,
+                'author2': y.author2,
+                'is_accepted_name': y.is_accepted_name,
+                'accepted_name_code': y.accepted_name_code,
+                'status_id': y.status_id,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'is_marine': y.is_marine,
+                'is_fossil': y.is_fossil,
+                'ref_short': y.ref_short,
+                'reference': y.reference,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'kingdom': x.kingdom,
+                'kingdom_c': x.kingdom_c,
+                'phylum': x.phylum,
+                'phylum_c': x.phylum_c,
+                'class': x.class_field,
+                'class_c': x.class_c,
+                'order': x.order,
+                'order_c': x.order_c,
+                'family': x.family,
+                'family_c': x.family_c,
+                'genus_c': x.genus_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+                item['redlist_wang'] = red_dict[red_code].redlist_wang
+                item['redlist_chen'] = red_dict[red_code].redlist_chen
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
+                item['redlist_wang'] = None
+                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -990,7 +846,6 @@ def date_range(date, simple, page, limit):
             })
         except:
             return 'Page does not exist'
-    print('date_range')
     return current_page_list
 
 def simple_formate(simple, page, limit):
@@ -1002,43 +857,38 @@ def simple_formate(simple, page, limit):
             raise JsonResponse({'message': 'The time range does not exist'}, status=status.HTTP_404_NOT_FOUND)
             # check whether in redlist
         redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+        # Create a redlist dic for adding redlist info
+        red_dict = dict()
+        for red in redlist:
+            red_dict[red.name_code] = red
         context = []
-        if redlist:
-            for x, y, z in zip(tables, scinames, redlist):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': z.iucn_code,
-                    'cites_code': z.cites_code,
-                    'coa_redlist_code': z.coa_redlist_code,
-                    'redlist_tw_2017': z.redlist_tw_2017,
-
-                })
-        else:
-            for x, y in zip(tables, scinames):
-                context.append({
-                    'name_code': x.name_code,
-                    'name': y.name,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': None,
-                    'cites_code': None,
-                    'coa_redlist_code': None,
-                    'redlist_tw_2017': None,
-
-                })
+        for x, y in zip(tables, scinames):
+            context.append({
+                'name_code': x.name_code,
+                'name': y.name,
+                'is_endemic': y.is_endemic,
+                'alien_status': y.alien_status,
+                'comment': y.comment,
+                'datelastmodified': y.datelastmodified,
+                'family': x.family,
+                'family_c': x.family_c,
+                'common_name_c': x.common_name_c,
+            })
+        # check whether redlist is or not
+        for item in context:
+            red_code = item['name_code']
+            # print('red_code', red_code)
+            if red_code in list(red_dict.keys()):
+                # print(red_dict[red_code])
+                item['iucn_code'] = red_dict[red_code].iucn_code
+                item['cites_code'] = red_dict[red_code].cites_code
+                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
+                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
+            else:
+                item['iucn_code'] = None
+                item['cites_code'] = None
+                item['coa_redlist_code'] = None
+                item['redlist_tw_2017'] = None
 
         try:
             paginator = Paginator(context, limit, orphans=5)
