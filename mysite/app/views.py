@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User, Group
-from django.db.models import Q
+from django.db.models import Q, Subquery, OuterRef
 from django.core.paginator import Paginator
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
@@ -247,15 +247,18 @@ def species_name(name, simple, date, accept, page, limit):
         except:
             return 'The species name does not exist'
         # check whether in redlist
-    redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
-    context = []
-    #Create a redlist dic for adding redlist info
-    red_dict = dict()
-    for red in redlist:
-        red_dict[red.name_code] = red
     context = []
     if simple == 'True':
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        ))
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -266,25 +269,28 @@ def species_name(name, simple, date, accept, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017
             })
-        #check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            #print('red_code', red_code)
-            if red_code in list(red_dict.keys()) :
-                #print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
 
     else:
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        )).annotate(redlist_wang=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
+        )).annotate(redlist_chen=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
+        ))
+
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                  'name_code': x.name_code,
                     'name': y.name,
@@ -319,26 +325,13 @@ def species_name(name, simple, date, accept, page, limit):
                     'family_c': x.family_c,
                     'genus_c': x.genus_c,
                     'common_name_c': x.common_name_c,
+                    'iucn_code': x.iucn_code,
+                    'cites_code': x.cites_code,
+                    'coa_redlist_code': x.coa_redlist_code,
+                    'redlist_tw_2017': x.redlist_tw_2017,
+                    'redlist_wang': x.redlist_wang,
+                    'redlist_chen': x.redlist_chen
             })
-        #check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            #print('red_code', red_code)
-            if red_code in list(red_dict.keys()) :
-                #print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-                item['redlist_wang'] = red_dict[red_code].redlist_wang
-                item['redlist_chen'] = red_dict[red_code].redlist_chen
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
-                item['redlist_wang'] = None
-                item['redlist_chen'] = None
     try:
         paginator = Paginator(context, limit, orphans=5)
         num_pages = paginator.num_pages
@@ -427,15 +420,18 @@ def common_name(cname, simple, date, accept, page, limit):
             return 'The species name does not exist'
         # check whether in redlist
 
-    redlist = Details.objects.filter(name_code__in=tables.values_list('name_code', flat=True))
-    context = []
-    # Create a redlist dic for adding redlist info
-    red_dict = dict()
-    for red in redlist:
-        red_dict[red.name_code] = red
     context = []
     if simple == 'True':
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        ))
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -446,25 +442,28 @@ def common_name(cname, simple, date, accept, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
 
     else:
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        )).annotate(redlist_wang=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
+        )).annotate(redlist_chen=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
+        ))
+
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -499,26 +498,13 @@ def common_name(cname, simple, date, accept, page, limit):
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_wang': x.redlist_wang,
+                'redlist_chen': x.redlist_chen
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-                item['redlist_wang'] = red_dict[red_code].redlist_wang
-                item['redlist_chen'] = red_dict[red_code].redlist_chen
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
-                item['redlist_wang'] = None
-                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -589,15 +575,18 @@ def accept_name(accept, simple, date, page, limit):
         return 'The input condition does not exist'
         # check whether in redlist
 
-    redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
-    context = []
-    # Create a redlist dic for adding redlist info
-    red_dict = dict()
-    for red in redlist:
-        red_dict[red.name_code] = red
     context = []
     if simple == 'True':
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        ))
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -608,25 +597,28 @@ def accept_name(accept, simple, date, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
 
     else:
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        )).annotate(redlist_wang=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
+        )).annotate(redlist_chen=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
+        ))
+
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -661,26 +653,13 @@ def accept_name(accept, simple, date, page, limit):
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_wang': x.redlist_wang,
+                'redlist_chen': x.redlist_chen
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-                item['redlist_wang'] = red_dict[red_code].redlist_wang
-                item['redlist_chen'] = red_dict[red_code].redlist_chen
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
-                item['redlist_wang'] = None
-                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -723,15 +702,18 @@ def date_range(date, simple, page, limit):
     except:
         return 'The time range does not exist'
         # check whether in redlist
-    redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
-    context = []
-    # Create a redlist dic for adding redlist info
-    red_dict = dict()
-    for red in redlist:
-        red_dict[red.name_code] = red
     context = []
     if simple == 'True':
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        ))
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -742,25 +724,28 @@ def date_range(date, simple, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
 
     else:
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        )).annotate(redlist_wang=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
+        )).annotate(redlist_chen=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
+        ))
+
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -795,26 +780,13 @@ def date_range(date, simple, page, limit):
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_wang': x.redlist_wang,
+                'redlist_chen': x.redlist_chen
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-                item['redlist_wang'] = red_dict[red_code].redlist_wang
-                item['redlist_chen'] = red_dict[red_code].redlist_chen
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
-                item['redlist_wang'] = None
-                item['redlist_chen'] = None
 
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -856,13 +828,17 @@ def simple_formate(simple, page, limit):
         except:
             raise JsonResponse({'message': 'The time range does not exist'}, status=status.HTTP_404_NOT_FOUND)
             # check whether in redlist
-        redlist = Details.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
-        # Create a redlist dic for adding redlist info
-        red_dict = dict()
-        for red in redlist:
-            red_dict[red.name_code] = red
         context = []
-        for x, y in zip(tables, scinames):
+        merge_redlist = tables.annotate(iucn_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
+        )).annotate(cites_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
+        )).annotate(coa_redlist_code=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
+        )).annotate(redlist_tw_2017=Subquery(
+            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
+        ))
+        for x, y in zip(merge_redlist, scinames):
             context.append({
                 'name_code': x.name_code,
                 'name': y.name,
@@ -873,22 +849,11 @@ def simple_formate(simple, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'common_name_c': x.common_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist_tw_2017
             })
-        # check whether redlist is or not
-        for item in context:
-            red_code = item['name_code']
-            # print('red_code', red_code)
-            if red_code in list(red_dict.keys()):
-                # print(red_dict[red_code])
-                item['iucn_code'] = red_dict[red_code].iucn_code
-                item['cites_code'] = red_dict[red_code].cites_code
-                item['coa_redlist_code'] = red_dict[red_code].coa_redlist_code
-                item['redlist_tw_2017'] = red_dict[red_code].redlist_tw_2017
-            else:
-                item['iucn_code'] = None
-                item['cites_code'] = None
-                item['coa_redlist_code'] = None
-                item['redlist_tw_2017'] = None
 
         try:
             paginator = Paginator(context, limit, orphans=5)
