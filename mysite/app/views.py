@@ -17,149 +17,76 @@ from django.template import loader
 
 from rest_framework.decorators import action
 from mysite.pagination import CustomPagination
-from .models import ScientificNames, TableSpecieslist, Details
-from .serializers import (
-    UserSerializer,
-    GroupSerializer,
-    ScientificNamesSerializer,
-    TableSpecieslistSerializer,
-    DetailsSerializer)
+from .models import ViewApioutput
 import datetime, itertools
 
 def name_code(pk, simple, page, limit):
     try:
         context = []
-        scinames = ScientificNames.objects.filter(name_code=pk)
-        tables = TableSpecieslist.objects.filter(name_code=pk)
-        # check whether in redlist
-        redlist = Details.objects.filter(name_code=pk)
-        # with redlist
+        scinames = ViewApioutput.objects.filter(name_code=pk)
         if simple == 'True':
-            if redlist:
-                for x, y, z in zip(tables, scinames, redlist):
-                    context.append({
-                        'name_code': x.name_code,
-                        'name': y.name,
-                        'is_endemic': y.is_endemic,
-                        'alien_status': y.alien_status,
-                        'comment': y.comment,
-                        'datelastmodified': y.datelastmodified,
-                        'family': x.family,
-                        'family_c': x.family_c,
-                        'common_name_c': x.common_name_c,
-                        'iucn_code': z.iucn_code,
-                        'cites_code': z.cites_code,
-                        'coa_redlist_code': z.coa_redlist_code,
-                        'redlist_tw_2017': z.redlist_tw_2017,
+            for x in scinames:
+                context.append({
+                    'name_code': x.name_code,
+                    'name': x.name,
+                    'is_endemic': x.is_endemic,
+                    'alien_status': x.alien_status,
+                    'comment': x.comment,
+                    'datelastmodified': x.datelastmodified,
+                    'family': x.family,
+                    'family_c': x.family_c,
+                    'common_name': x.common_name,
+                    'alternative_name_c': x.alternative_name_c,
+                    'iucn_code': x.iucn_code,
+                    'cites_code': x.cites_code,
+                    'coa_redlist_code': x.coa_redlist_code,
+                    'redlist_tw_2017': x.redlist2017
+                })
 
-                    })
-            else:
-                for x, y in zip(tables, scinames):
-                    context.append({
-                        'name_code': x.name_code,
-                        'name': y.name,
-                        'is_endemic': y.is_endemic,
-                        'alien_status': y.alien_status,
-                        'comment': y.comment,
-                        'datelastmodified': y.datelastmodified,
-                        'family': x.family,
-                        'family_c': x.family_c,
-                        'common_name_c': x.common_name_c,
-                        'iucn_code': None,
-                        'cites_code': None,
-                        'coa_redlist_code': None,
-                        'redlist_tw_2017': None,
-
-                    })
         else:
-            if redlist:
-                for x, y, z in zip(tables, scinames, redlist):
-                    context.append({
-                        'name_code': x.name_code,
-                        'name': y.name,
-                        'genus': y.genus,
-                        'species': y.species,
-                        'infraspecies_marker': y.infraspecies_marker,
-                        'infraspecies': y.infraspecies,
-                        'infraspecies2_marker': y.infraspecies2_marker,
-                        'infraspecies2': y.infraspecies2,
-                        'author': y.author,
-                        'author2': y.author2,
-                        'is_accepted_name': y.is_accepted_name,
-                        'accepted_name_code': y.accepted_name_code,
-                        'status_id': y.status_id,
-                        'is_endemic': y.is_endemic,
-                        'alien_status': y.alien_status,
-                        'is_marine': y.is_marine,
-                        'is_fossil': y.is_fossil,
-                        'ref_short': y.ref_short,
-                        'reference': y.reference,
-                        'comment': y.comment,
-                        'datelastmodified': y.datelastmodified,
-                        'kingdom': x.kingdom,
-                        'kingdom_c': x.kingdom_c,
-                        'phylum': x.phylum,
-                        'phylum_c': x.phylum_c,
-                        'class': x.class_field,
-                        'class_c': x.class_c,
-                        'order': x.order,
-                        'order_c': x.order_c,
-                        'family': x.family,
-                        'family_c': x.family_c,
-                        'genus_c': x.genus_c,
-                        'common_name_c': x.common_name_c,
-                        'iucn_code': z.iucn_code,
-                        'cites_code': z.cites_code,
-                        'coa_redlist_code': z.coa_redlist_code,
-                        'redlist_tw_2017': z.redlist_tw_2017,
-                        'redlist_wang': z.redlist_wang,
-                        'redlist_chen': z.redlist_chen
-                    })
-            else:
-                for x, y in zip(
-                        TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True)),
-                        scinames):
-                    context.append({
-                        'name_code': x.name_code,
-                        'name': y.name,
-                        'genus': y.genus,
-                        'species': y.species,
-                        'infraspecies_marker': y.infraspecies_marker,
-                        'infraspecies': y.infraspecies,
-                        'infraspecies2_marker': y.infraspecies2_marker,
-                        'infraspecies2': y.infraspecies2,
-                        'author': y.author,
-                        'author2': y.author2,
-                        'is_accepted_name': y.is_accepted_name,
-                        'accepted_name_code': y.accepted_name_code,
-                        'status_id': y.status_id,
-                        'is_endemic': y.is_endemic,
-                        'alien_status': y.alien_status,
-                        'is_marine': y.is_marine,
-                        'is_fossil': y.is_fossil,
-                        'ref_short': y.ref_short,
-                        'reference': y.reference,
-                        'comment': y.comment,
-                        'datelastmodified': y.datelastmodified,
-                        'kingdom': x.kingdom,
-                        'kingdom_c': x.kingdom_c,
-                        'phylum': x.phylum,
-                        'phylum_c': x.phylum_c,
-                        'class': x.class_field,
-                        'class_c': x.class_c,
-                        'order': x.order,
-                        'order_c': x.order_c,
-                        'family': x.family,
-                        'family_c': x.family_c,
-                        'genus_c': x.genus_c,
-                        'common_name_c': x.common_name_c,
-                        'iucn_code': None,
-                        'cites_code': None,
-                        'coa_redlist_code': None,
-                        'redlist_tw_2017': None,
-                        'redlist_wang': None,
-                        'redlist_chen': None
-                    })
+            for x in scinames:
+                context.append({
+                    'name_code': x.name_code,
+                    'name': x.name,
+                    'genus': x.genus,
+                    'species': x.species,
+                    'infraspecies_marker': x.infraspecies_marker,
+                    'infraspecies': x.infraspecies,
+                    'infraspecies2_marker': x.infraspecies2_marker,
+                    'infraspecies2': x.infraspecies2,
+                    'author': x.author,
+                    'author2': x.author2,
+                    'is_accepted_name': x.is_accepted_name,
+                    'accepted_name_code': x.accepted_name_code,
+                    'status_id': x.status_id,
+                    'is_endemic': x.is_endemic,
+                    'alien_status': x.alien_status,
+                    'is_marine': x.is_marine,
+                    'is_fossil': x.is_fossil,
+                    'ref_short': x.ref_short,
+                    'reference': x.reference,
+                    'comment': x.comment,
+                    'datelastmodified': x.datelastmodified,
+                    'kingdom': x.kingdom,
+                    'kingdom_c': x.kingdom_c,
+                    'phylum': x.phylum,
+                    'phylum_c': x.phylum_c,
+                    'class': x.class_field,
+                    'class_c': x.class_c,
+                    'order': x.order,
+                    'order_c': x.order_c,
+                    'family': x.family,
+                    'family_c': x.family_c,
+                    'genus_c': x.genus_c,
+                    'common_name': x.common_name,
+                    'alternative_name_c': x.alternative_name_c,
+                    'iucn_code': x.iucn_code,
+                    'cites_code': x.cites_code,
+                    'coa_redlist_code': x.coa_redlist_code,
+                    'redlist_tw_2017': x.redlist2017,
+                    'redlist_wang': x.redlist_wang,
+                    'redlist_chen': x.redlist_chen
+                })
 
     except:
         return 'The namecode does not exist'
@@ -204,18 +131,16 @@ def species_name(name, simple, date, accept, page, limit):
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            scinames = ScientificNames.objects.filter(name__contains=name).filter(
+            scinames = ViewApioutput.objects.filter(name__contains=name).filter(
                 datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=1)
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
         except:
             return 'The date range or accepted name does not exist'
     elif date and accept == 'False':
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            scinames = ScientificNames.objects.filter(name__contains=name).filter(
+            scinames = ViewApioutput.objects.filter(name__contains=name).filter(
                 datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=0)
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
         except:
             return 'The date range does not exist'
     elif date:
@@ -223,114 +148,89 @@ def species_name(name, simple, date, accept, page, limit):
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            scinames = ScientificNames.objects.filter(name__contains=name).filter(
+            scinames = ViewApioutput.objects.filter(name__contains=name).filter(
                 datelastmodified__range=(start_time, end_date))
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
         except:
             return 'The date range does not exist'
     elif accept == 'True':
         try:
-            scinames = ScientificNames.objects.filter(name__contains=name).filter(is_accepted_name__contains=1)
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+            scinames = ViewApioutput.objects.filter(name__contains=name).filter(is_accepted_name__contains=1)
         except:
             return 'The accepted name does not exist'
     elif accept == 'False':
         try:
-            scinames = ScientificNames.objects.filter(name__contains=name).filter(is_accepted_name__contains=0)
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+            scinames = ViewApioutput.objects.filter(name__contains=name).filter(is_accepted_name__contains=0)
         except:
             return 'The species name does not exist'
     else:
         try:
-            scinames = ScientificNames.objects.filter(name__contains=name)
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+            scinames = ViewApioutput.objects.filter(name__contains=name)
         except:
             return 'The species name does not exist'
         # check whether in redlist
     context = []
     if simple == 'True':
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        ))
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'family': x.family,
                 'family_c': x.family_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017
+                'redlist_tw_2017': x.redlist2017
             })
 
     else:
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        )).annotate(redlist_wang=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
-        )).annotate(redlist_chen=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
-        ))
-
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
-                 'name_code': x.name_code,
-                    'name': y.name,
-                    'genus': y.genus,
-                    'species': y.species,
-                    'infraspecies_marker': y.infraspecies_marker,
-                    'infraspecies': y.infraspecies,
-                    'infraspecies2_marker': y.infraspecies2_marker,
-                    'infraspecies2': y.infraspecies2,
-                    'author': y.author,
-                    'author2': y.author2,
-                    'is_accepted_name': y.is_accepted_name,
-                    'accepted_name_code': y.accepted_name_code,
-                    'status_id': y.status_id,
-                    'is_endemic': y.is_endemic,
-                    'alien_status': y.alien_status,
-                    'is_marine': y.is_marine,
-                    'is_fossil': y.is_fossil,
-                    'ref_short': y.ref_short,
-                    'reference': y.reference,
-                    'comment': y.comment,
-                    'datelastmodified': y.datelastmodified,
-                    'kingdom': x.kingdom,
-                    'kingdom_c': x.kingdom_c,
-                    'phylum': x.phylum,
-                    'phylum_c': x.phylum_c,
-                    'class': x.class_field,
-                    'class_c': x.class_c,
-                    'order': x.order,
-                    'order_c': x.order_c,
-                    'family': x.family,
-                    'family_c': x.family_c,
-                    'genus_c': x.genus_c,
-                    'common_name_c': x.common_name_c,
-                    'iucn_code': x.iucn_code,
-                    'cites_code': x.cites_code,
-                    'coa_redlist_code': x.coa_redlist_code,
-                    'redlist_tw_2017': x.redlist_tw_2017,
-                    'redlist_wang': x.redlist_wang,
-                    'redlist_chen': x.redlist_chen
+                'name_code': x.name_code,
+                'name': x.name,
+                'genus': x.genus,
+                'species': x.species,
+                'infraspecies_marker': x.infraspecies_marker,
+                'infraspecies': x.infraspecies,
+                'infraspecies2_marker': x.infraspecies2_marker,
+                'infraspecies2': x.infraspecies2,
+                'author': x.author,
+                'author2': x.author2,
+                'is_accepted_name': x.is_accepted_name,
+                'accepted_name_code': x.accepted_name_code,
+                'status_id': x.status_id,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'is_marine': x.is_marine,
+                'is_fossil': x.is_fossil,
+                'ref_short': x.ref_short,
+                'reference': x.reference,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
+                'kingdom': x.kingdom,
+                'kingdom_c': x.kingdom_c,
+                'phylum': x.phylum,
+                'phylum_c': x.phylum_c,
+                'class': x.class_field,
+                'class_c': x.class_c,
+                'order': x.order,
+                'order_c': x.order_c,
+                'family': x.family,
+                'family_c': x.family_c,
+                'genus_c': x.genus_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
+                'iucn_code': x.iucn_code,
+                'cites_code': x.cites_code,
+                'coa_redlist_code': x.coa_redlist_code,
+                'redlist_tw_2017': x.redlist2017,
+                'redlist_wang': x.redlist_wang,
+                'redlist_chen': x.redlist_chen
             })
     try:
         paginator = Paginator(context, limit, orphans=5)
@@ -371,20 +271,20 @@ def common_name(cname, simple, date, accept, page, limit):
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(
-                name_code__in=tables.values_list('name_code', flat=True)).filter(
-                datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=1)
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname)).filter(
+                datelastmodified__range=(start_time, end_date)).filter(
+                is_accepted_name__contains=1
+            )
         except:
             return 'The date range or accepted name does not exist'
     elif date and accept == 'False':
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(
-                name_code__in=tables.values_list('name_code', flat=True)).filter(
-                datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=0)
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname)).filter(
+                datelastmodified__range=(start_time, end_date)).filter(
+                is_accepted_name__contains=0
+            )
         except:
             return 'The date range does not exist'
     elif date:
@@ -392,100 +292,72 @@ def common_name(cname, simple, date, accept, page, limit):
         try:
             start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
             end_date = datetime.date.today()
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(
-                name_code__in=tables.values_list('name_code', flat=True)).filter(
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname)).filter(
                 datelastmodified__range=(start_time, end_date))
         except:
             return 'The date range does not exist'
     elif accept == 'True':
         try:
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(
-                name_code__in=tables.values_list('name_code', flat=True)).filter(is_accepted_name__contains=1)
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname)).filter(is_accepted_name__contains=1)
         except:
             return 'The accepted name does not exist'
     elif accept == 'False':
         try:
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(
-                name_code__in=tables.values_list('name_code', flat=True)).filter(is_accepted_name__contains=0)
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname)).filter(
+                is_accepted_name__contains=0)
         except:
             return 'The species name does not exist'
     else:
         try:
-            tables = TableSpecieslist.objects.filter(common_name_c__contains=cname)
-            scinames = ScientificNames.objects.filter(name_code__in=tables.values_list('name_code', flat=True))
+            scinames = ViewApioutput.objects.filter(Q(common_name__contains=cname)|Q(alternative_name_c__contains=cname))
         except:
             return 'The species name does not exist'
         # check whether in redlist
 
     context = []
     if simple == 'True':
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        ))
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'family': x.family,
                 'family_c': x.family_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017
+                'redlist_tw_2017': x.redlist2017
             })
 
     else:
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        )).annotate(redlist_wang=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
-        )).annotate(redlist_chen=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
-        ))
-
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'genus': y.genus,
-                'species': y.species,
-                'infraspecies_marker': y.infraspecies_marker,
-                'infraspecies': y.infraspecies,
-                'infraspecies2_marker': y.infraspecies2_marker,
-                'infraspecies2': y.infraspecies2,
-                'author': y.author,
-                'author2': y.author2,
-                'is_accepted_name': y.is_accepted_name,
-                'accepted_name_code': y.accepted_name_code,
-                'status_id': y.status_id,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'is_marine': y.is_marine,
-                'is_fossil': y.is_fossil,
-                'ref_short': y.ref_short,
-                'reference': y.reference,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'genus': x.genus,
+                'species': x.species,
+                'infraspecies_marker': x.infraspecies_marker,
+                'infraspecies': x.infraspecies,
+                'infraspecies2_marker': x.infraspecies2_marker,
+                'infraspecies2': x.infraspecies2,
+                'author': x.author,
+                'author2': x.author2,
+                'is_accepted_name': x.is_accepted_name,
+                'accepted_name_code': x.accepted_name_code,
+                'status_id': x.status_id,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'is_marine': x.is_marine,
+                'is_fossil': x.is_fossil,
+                'ref_short': x.ref_short,
+                'reference': x.reference,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'kingdom': x.kingdom,
                 'kingdom_c': x.kingdom_c,
                 'phylum': x.phylum,
@@ -497,11 +369,12 @@ def common_name(cname, simple, date, accept, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_tw_2017': x.redlist2017,
                 'redlist_wang': x.redlist_wang,
                 'redlist_chen': x.redlist_chen
             })
@@ -544,15 +417,13 @@ def accept_name(accept, simple, date, page, limit):
             try:
                 start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
                 end_date = datetime.date.today()
-                scinames = ScientificNames.objects.filter(
+                scinames = ViewApioutput.objects.filter(
                     datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=1)
-                tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
             except:
                 return 'The date range does not exist'
         else:
             try:
-                scinames = ScientificNames.objects.filter(is_accepted_name__contains=1)
-                tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+                scinames = ViewApioutput.objects.filter(is_accepted_name__contains=1)
             except:
                 return 'The input condition does not exist'
     elif accept == 'False':
@@ -560,15 +431,13 @@ def accept_name(accept, simple, date, page, limit):
             try:
                 start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
                 end_date = datetime.date.today()
-                scinames = ScientificNames.objects.filter(
+                scinames = ViewApioutput.objects.filter(
                     datelastmodified__range=(start_time, end_date)).filter(is_accepted_name__contains=0)
-                tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
             except:
                 return 'The date range does not exist'
         else:
             try:
-                scinames = ScientificNames.objects.filter(is_accepted_name__contains=0)
-                tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+                scinames = ViewApioutput.objects.filter(is_accepted_name__contains=0)
             except:
                 return 'The input condition does not exist'
     else:
@@ -577,70 +446,48 @@ def accept_name(accept, simple, date, page, limit):
 
     context = []
     if simple == 'True':
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        ))
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'family': x.family,
                 'family_c': x.family_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017
+                'redlist_tw_2017': x.redlist2017
             })
 
     else:
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        )).annotate(redlist_wang=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
-        )).annotate(redlist_chen=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
-        ))
-
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'genus': y.genus,
-                'species': y.species,
-                'infraspecies_marker': y.infraspecies_marker,
-                'infraspecies': y.infraspecies,
-                'infraspecies2_marker': y.infraspecies2_marker,
-                'infraspecies2': y.infraspecies2,
-                'author': y.author,
-                'author2': y.author2,
-                'is_accepted_name': y.is_accepted_name,
-                'accepted_name_code': y.accepted_name_code,
-                'status_id': y.status_id,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'is_marine': y.is_marine,
-                'is_fossil': y.is_fossil,
-                'ref_short': y.ref_short,
-                'reference': y.reference,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'genus': x.genus,
+                'species': x.species,
+                'infraspecies_marker': x.infraspecies_marker,
+                'infraspecies': x.infraspecies,
+                'infraspecies2_marker': x.infraspecies2_marker,
+                'infraspecies2': x.infraspecies2,
+                'author': x.author,
+                'author2': x.author2,
+                'is_accepted_name': x.is_accepted_name,
+                'accepted_name_code': x.accepted_name_code,
+                'status_id': x.status_id,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'is_marine': x.is_marine,
+                'is_fossil': x.is_fossil,
+                'ref_short': x.ref_short,
+                'reference': x.reference,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'kingdom': x.kingdom,
                 'kingdom_c': x.kingdom_c,
                 'phylum': x.phylum,
@@ -652,11 +499,12 @@ def accept_name(accept, simple, date, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_tw_2017': x.redlist2017,
                 'redlist_wang': x.redlist_wang,
                 'redlist_chen': x.redlist_chen
             })
@@ -697,77 +545,54 @@ def date_range(date, simple, page, limit):
     try:
         start_time = datetime.datetime.strptime(date, "%Y-%m-%d")
         end_date = datetime.date.today()
-        scinames = ScientificNames.objects.filter(datelastmodified__range=(start_time, end_date))
-        tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+        scinames = ViewApioutput.objects.filter(datelastmodified__range=(start_time, end_date))
     except:
         return 'The time range does not exist'
         # check whether in redlist
     context = []
     if simple == 'True':
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        ))
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'family': x.family,
                 'family_c': x.family_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017
+                'redlist_tw_2017': x.redlist2017
             })
 
     else:
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        )).annotate(redlist_wang=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_wang'),
-        )).annotate(redlist_chen=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_chen'),
-        ))
-
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'genus': y.genus,
-                'species': y.species,
-                'infraspecies_marker': y.infraspecies_marker,
-                'infraspecies': y.infraspecies,
-                'infraspecies2_marker': y.infraspecies2_marker,
-                'infraspecies2': y.infraspecies2,
-                'author': y.author,
-                'author2': y.author2,
-                'is_accepted_name': y.is_accepted_name,
-                'accepted_name_code': y.accepted_name_code,
-                'status_id': y.status_id,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'is_marine': y.is_marine,
-                'is_fossil': y.is_fossil,
-                'ref_short': y.ref_short,
-                'reference': y.reference,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'genus': x.genus,
+                'species': x.species,
+                'infraspecies_marker': x.infraspecies_marker,
+                'infraspecies': x.infraspecies,
+                'infraspecies2_marker': x.infraspecies2_marker,
+                'infraspecies2': x.infraspecies2,
+                'author': x.author,
+                'author2': x.author2,
+                'is_accepted_name': x.is_accepted_name,
+                'accepted_name_code': x.accepted_name_code,
+                'status_id': x.status_id,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'is_marine': x.is_marine,
+                'is_fossil': x.is_fossil,
+                'ref_short': x.ref_short,
+                'reference': x.reference,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'kingdom': x.kingdom,
                 'kingdom_c': x.kingdom_c,
                 'phylum': x.phylum,
@@ -779,11 +604,12 @@ def date_range(date, simple, page, limit):
                 'family': x.family,
                 'family_c': x.family_c,
                 'genus_c': x.genus_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c': x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017,
+                'redlist_tw_2017': x.redlist2017,
                 'redlist_wang': x.redlist_wang,
                 'redlist_chen': x.redlist_chen
             })
@@ -823,36 +649,27 @@ def date_range(date, simple, page, limit):
 def simple_formate(simple, page, limit):
     if simple == 'True':
         try:
-            scinames = ScientificNames.objects.all()
-            tables = TableSpecieslist.objects.filter(name_code__in=scinames.values_list('name_code', flat=True))
+            scinames = ViewApioutput.objects.all()
         except:
             raise JsonResponse({'message': 'The time range does not exist'}, status=status.HTTP_404_NOT_FOUND)
             # check whether in redlist
         context = []
-        merge_redlist = tables.annotate(iucn_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('iucn_code'),
-        )).annotate(cites_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('cites_code'),
-        )).annotate(coa_redlist_code=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('coa_redlist_code'),
-        )).annotate(redlist_tw_2017=Subquery(
-            Details.objects.filter(name_code=OuterRef('name_code')).values('redlist_tw_2017'),
-        ))
-        for x, y in zip(merge_redlist, scinames):
+        for x in scinames:
             context.append({
                 'name_code': x.name_code,
-                'name': y.name,
-                'is_endemic': y.is_endemic,
-                'alien_status': y.alien_status,
-                'comment': y.comment,
-                'datelastmodified': y.datelastmodified,
+                'name': x.name,
+                'is_endemic': x.is_endemic,
+                'alien_status': x.alien_status,
+                'comment': x.comment,
+                'datelastmodified': x.datelastmodified,
                 'family': x.family,
                 'family_c': x.family_c,
-                'common_name_c': x.common_name_c,
+                'common_name': x.common_name,
+                'alternative_name_c':x.alternative_name_c,
                 'iucn_code': x.iucn_code,
                 'cites_code': x.cites_code,
                 'coa_redlist_code': x.coa_redlist_code,
-                'redlist_tw_2017': x.redlist_tw_2017
+                'redlist_tw_2017': x.redlist2017
             })
 
         try:
